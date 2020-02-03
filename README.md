@@ -1,1 +1,1 @@
-# BFS-UCS-and-A-
+# BFS-UCS-and-A*
