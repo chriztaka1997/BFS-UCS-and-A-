@@ -90,7 +90,7 @@ def check_node(target_node, nodes):
         iteration+=1
     return found_node, item_index
 
-def expand_bfs(node, explored_nodes):
+def expand_bfs(node):
     '''
     expand all the possible move of the node
     This is where all the move constraint should be handled
@@ -103,91 +103,66 @@ def expand_bfs(node, explored_nodes):
     possible_move = []
     #check jaunt
     check_jaunt = check_node(node, jaunts)
-    if (check_jaunt[0]) :
+    if check_jaunt[0] :
         node.jaunt = jaunts[check_jaunt[1]].jaunt
-        if not (check_node(node.jaunt, explored_nodes)[0]):
-            node.jaunt.parent = node
-            possible_move.append(node.jaunt)
-            explored_nodes.append(node.jaunt)
+        possible_move.append((node.jaunt.year, node.jaunt.x, node.jaunt.y))
+
 
     #Check other possible move
     #North
     if node.y +1 < space_size_y:
         temp_node = node.copy()
         temp_node.y += 1
-        if not (check_node(temp_node,explored_nodes)[0]):
-            temp_node.parent = node
-            possible_move.append(temp_node)
-            explored_nodes.append(temp_node)
+        possible_move.append((temp_node.year,temp_node.x, temp_node.y))
+
 
     #North East
     if node.x + 1 < space_size_x and node.y + 1 < space_size_y:
         temp_node = node.copy()
         temp_node.y += 1
         temp_node.x += 1
-        if not (check_node(temp_node,explored_nodes)[0]):
-            temp_node.parent = node
-            possible_move.append(temp_node)
-            explored_nodes.append(temp_node)
+        possible_move.append((temp_node.year, temp_node.x, temp_node.y))
 
     #East
     if node.x + 1 < space_size_x :
         temp_node = node.copy()
         temp_node.x += 1
-        if not check_node(temp_node,explored_nodes)[0]:
-            temp_node.parent = node
-            possible_move.append(temp_node)
-            explored_nodes.append(temp_node)
+        possible_move.append((temp_node.year, temp_node.x, temp_node.y))
 
     #South East
     if node.x + 1 < space_size_x and node.y - 1 >= 0:
         temp_node = node.copy()
         temp_node.y -= 1
         temp_node.x += 1
-        if not (check_node(temp_node,explored_nodes)[0]):
-            temp_node.parent = node
-            possible_move.append(temp_node)
-            explored_nodes.append(temp_node)
+        possible_move.append((temp_node.year, temp_node.x, temp_node.y))
 
     #South
     if node.y - 1 >= 0:
         temp_node = node.copy()
         temp_node.y -= 1
-        if not (check_node(temp_node,explored_nodes)[0]):
-            temp_node.parent = node
-            possible_move.append(temp_node)
-            explored_nodes.append(temp_node)
+        possible_move.append((temp_node.year, temp_node.x, temp_node.y))
 
     #South West
     if node.x - 1 >= 0 and node.y - 1 >= 0:
         temp_node = node.copy()
         temp_node.y -= 1
         temp_node.x -= 1
-        if not (check_node(temp_node,explored_nodes)[0]):
-            temp_node.parent = node
-            possible_move.append(temp_node)
-            explored_nodes.append(temp_node)
+        possible_move.append((temp_node.year, temp_node.x, temp_node.y))
 
     #West
     if node.x - 1 >= 0  :
         temp_node = node.copy()
         temp_node.x -= 1
-        if not (check_node(temp_node,explored_nodes)[0]):
-            temp_node.parent = node
-            possible_move.append(temp_node)
-            explored_nodes.append(temp_node)
+        possible_move.append((temp_node.year, temp_node.x, temp_node.y))
 
     #North West
     if node.x - 1 >= 0and node.y + 1 < space_size_y:
         temp_node = node.copy()
         temp_node.y += 1
         temp_node.x -= 1
-        if not (check_node(temp_node,explored_nodes)[0]):
-            temp_node.parent = node
-            possible_move.append(temp_node)
-            explored_nodes.append(temp_node)
+        possible_move.append((temp_node.year, temp_node.x, temp_node.y))
 
-    return possible_move
+    return list(dict.fromkeys(possible_move))
 
 def evaluate_cost(node):
     '''
@@ -227,20 +202,28 @@ def bfs(init_node, goal_node, jaunts):
 
     #initial
     frontier_nodes.append(init_node)
+    explored_nodes.append((init_node.year,init_node.x,init_node.y))
 
-    explored_nodes.append(init_node)
     found_goal = False
 
     while (len(frontier_nodes) != 0) and (not found_goal):      #while the frontier node is not empty and goal not found, keep searchingr
         print(len(frontier_nodes))
-        temp_node = frontier_nodes.pop(0)
+        temp_node= frontier_nodes.pop(0)
+        explored_nodes.append((temp_node.year,temp_node.x,temp_node.y))
+
         if temp_node.is_equal(goal_node):
             found_goal = True
             goal_node.parent = temp_node.parent
         else:
-            childrens = expand_bfs(temp_node, explored_nodes)
+            childrens = expand_bfs(temp_node)
             for child in childrens:
-                frontier_nodes.append(child)
+                #Check if the node is in the explored list
+                if not (child in explored_nodes):
+                    child_node = Node(child[0], child[1], child[2])
+                    if temp_node.year != child[0]:
+                        child_node.jaunt = temp_node
+                    child_node.parent = temp_node
+                    frontier_nodes.append(child_node)
 
     return_statements = []
 
@@ -323,3 +306,11 @@ else:
 # list_nodes.reverse()
 # print(list_nodes[0][1])
 # print(len(list_nodes))
+
+#Check if a tuple of string can be checked
+# tuple1 = [(2020,12,11), (2021, 13, 10)]
+# tuple2 = [(2020,12,11), (2021, 13, 10)]
+# print(len(tuple2))
+# tuple1.append((2020,12,11))
+# print(tuple1)
+# print(list(set(tuple1)))
