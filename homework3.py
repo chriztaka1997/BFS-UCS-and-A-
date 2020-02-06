@@ -189,6 +189,19 @@ def evaluate_cost(node):
 
     return total_cost,cost_list
 
+def check_no_solution(init_node, goal_node, jaunts):
+    init_year = init_node.year
+    goal_year = goal_node.year
+    combine_year = [i.year for i in jaunts ]
+    combine_year.append(init_year)
+
+    if goal_year in combine_year:
+        return False
+    else:
+        return True
+
+
+
 def bfs(init_node, goal_node, jaunts):
     #space size x and space size y are the bound of the space
     #THey are both global variable
@@ -198,13 +211,15 @@ def bfs(init_node, goal_node, jaunts):
 
     #initial
     frontier_nodes.append(init_node)
+    explored_nodes.append((init_node.year, init_node.x, init_node.y))
 
     found_goal = False
 
-    while (len(frontier_nodes) != 0) and (not found_goal):      #while the frontier node is not empty and goal not found, keep searchingr
+    no_solution = check_no_solution(init_node, goal_node, jaunts)
+
+    while (len(frontier_nodes) != 0) and (not found_goal) and (not no_solution):      #while the frontier node is not empty and goal not found, keep searchingr
         print(len(frontier_nodes))
         temp_node= frontier_nodes.pop(0)
-        explored_nodes.append((temp_node.year,temp_node.x,temp_node.y))
 
         if temp_node.is_equal(goal_node):
             found_goal = True
@@ -305,8 +320,13 @@ else:
 
 #Check if a tuple of string can be checked
 # tuple1 = [(2020,12,11), (2021, 13, 10)]
-# tuple2 = [(2020,12,11), (2021, 13, 10)]
+# tuple2 = [(2020,12,11), (2021, 13, 10), (2020, 3, 1)]
 # print(len(tuple2))
 # tuple1.append((2020,12,11))
 # print(tuple1)
 # print(list(set(tuple1)))
+# print(set(tuple2) )
+
+# list1 = [i for i in range (10)]
+# list1.append(10)
+# print(list1)
