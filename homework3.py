@@ -234,6 +234,7 @@ def bfs(init_node, goal_node, jaunts):
                         if temp_node.year != child[0]:
                             child_node.jaunt = temp_node
                         child_node.parent = temp_node
+                        explored_nodes.append((child_node.year, child_node.x, child_node.y))
                         frontier_nodes.append(child_node)
 
     return_statements = []
