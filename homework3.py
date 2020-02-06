@@ -79,12 +79,12 @@ def check_node(target_node, nodes):
     :return: a boolean of true and false
     '''
     found_node = False
-    item_index = 0
+    item_index = []
     iteration = 0
     for node in nodes:
         if node.is_equal(target_node):
             found_node = True
-            item_index += iteration
+            item_index.append(iteration)
         iteration+=1
     return found_node, item_index
 
@@ -101,8 +101,10 @@ def expand_bfs(node):
     #check jaunt
     check_jaunt = check_node(node, jaunts)
     if check_jaunt[0] :
-        node.jaunt = jaunts[check_jaunt[1]].jaunt
-        possible_move.append((node.jaunt.year, node.jaunt.x, node.jaunt.y))
+        list_of_jaunt = check_jaunt[1]
+        for i in list_of_jaunt:
+            node.jaunt = jaunts[i].jaunt
+            possible_move.append((node.jaunt.year, node.jaunt.x, node.jaunt.y))
 
 
     #Check other possible move
