@@ -1,4 +1,3 @@
-
 class Node:
     def __init__(self,year,x,y, jaunt = None, parent = None):
         self.year = int(year)
@@ -74,7 +73,6 @@ def check_node(target_node, nodes):
     '''
     This function will check if the node is in the list of nodes or not
     Using the overwritten is_equal function
-
     :param node:
     - target_node: is the node that is being searched
     - nodes: is the list of explored nodes
@@ -95,7 +93,6 @@ def expand_bfs(node):
     expand all the possible move of the node
     This is where all the move constraint should be handled
     where jaunts, space size x and space size y are global variable
-
     Return a list of nodes that could be the possible next move and the cost
     '''
     move_cost = 1
@@ -169,7 +166,6 @@ def evaluate_cost(node):
     This function is to evaluate cost by subtracting the distance between the current node and its parent (year,x,y)
     depending on the method of search.
     The adding their absolute value, it will differentiate the actions were taken
-
     :param node: the goal node
     :return:
     - total_cost: the total cost of the moves taken to reach the goal
@@ -202,7 +198,6 @@ def bfs(init_node, goal_node, jaunts):
 
     #initial
     frontier_nodes.append(init_node)
-    explored_nodes.append((init_node.year,init_node.x,init_node.y))
 
     found_goal = False
 
@@ -220,10 +215,11 @@ def bfs(init_node, goal_node, jaunts):
                 #Check if the node is in the explored list
                 if not (child in explored_nodes):
                     child_node = Node(child[0], child[1], child[2])
-                    if temp_node.year != child[0]:
-                        child_node.jaunt = temp_node
-                    child_node.parent = temp_node
-                    frontier_nodes.append(child_node)
+                    if not(check_node(child_node, frontier_nodes)[0]):
+                        if temp_node.year != child[0]:
+                            child_node.jaunt = temp_node
+                        child_node.parent = temp_node
+                        frontier_nodes.append(child_node)
 
     return_statements = []
 
