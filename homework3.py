@@ -198,9 +198,12 @@ def check_no_solution(init_node, goal_node, jaunts):
     combine_year.append(init_year)
 
     if goal_year in combine_year:
-        return False
+        if 0 <= goal_node.x < space_size_x and 0<= goal_node.y < space_size_y:
+            return True
+        else:
+            return False
     else:
-        return True
+        return False
 
 
 
@@ -219,7 +222,7 @@ def bfs(init_node, goal_node, jaunts):
 
     no_solution = check_no_solution(init_node, goal_node, jaunts)
 
-    while (len(frontier_nodes) != 0) and (not found_goal) and (not no_solution):      #while the frontier node is not empty and goal not found, keep searchingr
+    while (len(frontier_nodes) != 0) and (not found_goal) and (no_solution):      #while the frontier node is not empty and goal not found, keep searchingr
         print(len(frontier_nodes))
         temp_node= frontier_nodes.pop(0)
 
@@ -253,6 +256,21 @@ def bfs(init_node, goal_node, jaunts):
                                      str(current_node.y)+" " +str(cost[1]) )
 
     write_output(return_statements)
+
+def ucs(init_node, goal_node, jaunts):
+    # space size x and space size y are the bound of the space
+    # THey are both global variable
+
+    frontier_nodes = []
+    explored_nodes = []
+
+    # initial
+    frontier_nodes.append(init_node)
+    explored_nodes.append((init_node.year, init_node.x, init_node.y))
+
+    found_goal = False
+
+    no_solution = check_no_solution(init_node, goal_node, jaunts)
 
 
 
@@ -333,3 +351,8 @@ else:
 # list1 = [i for i in range (10)]
 # list1.append(10)
 # print(list1)
+
+#Sort a list that has a tuple
+# list1 = [(10,(2020, 30, 20)), (14, (2020, 10, 30)), (10, (2020, 20, 10))]
+# print(list1)
+# print(sorted(list1, key = lambda x : x[0]  ))
