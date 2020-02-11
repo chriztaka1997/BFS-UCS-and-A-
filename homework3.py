@@ -88,6 +88,60 @@ def check_node(target_node, nodes):
         iteration+=1
     return found_node, item_index
 
+def check_no_solution(init_node, goal_node, jaunts):
+    init_year = init_node.year
+    goal_year = goal_node.year
+    combine_year = [i.year for i in jaunts ]
+    combine_year.append(init_year)
+
+    if goal_year in combine_year:
+        if 0 <= goal_node.x < space_size_x and 0<= goal_node.y < space_size_y:
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def evaluate_cost(node):
+    '''
+    This function is to evaluate cost by subtracting the distance between the current node and its parent (year,x,y)
+    depending on the method of search.
+    The adding their absolute value, it will differentiate the actions were taken
+    :param node: the goal node
+    :return:
+    - total_cost: the total cost of the moves taken to reach the goal
+    - cost_list: The list of tuple of the move taken from start to goal with the cost
+    '''
+    cost_list = []
+
+    if method == "BFS":
+
+        temp_node = node
+        while not (temp_node.parent is None):
+            cost_list.append((temp_node, 1))
+            temp_node = temp_node.parent
+
+    else:
+        temp_node = node
+        while not (temp_node.parent is None):
+            if temp_node.x > temp_node.parent.x and temp_node.y > temp_node.parent.y:
+                cost_list((temp_node, 14))
+            elif temp_node.year != temp_node.parent.year:
+                cost_list.append((temp_node, abs(temp_node.parent.year - temp_node.year)))
+            else:
+                cost_list.append((temp_node, 10))
+            temp_node = temp_node.parent
+
+    cost_list.append((temp_node, 0))
+    cost_list.reverse()
+
+    return cost_list
+
+'''
+This part is specific to BFS 
+'''
+
 def expand_bfs(node):
     '''
     expand all the possible move of the node
@@ -103,8 +157,7 @@ def expand_bfs(node):
     if check_jaunt[0] :
         list_of_jaunt = check_jaunt[1]
         for i in list_of_jaunt:
-            node.jaunt = jaunts[i].jaunt
-            possible_move.append((node.jaunt.year, node.jaunt.x, node.jaunt.y))
+            possible_move.append((jaunts[i].jaunt.year, node.x, node.y))
 
 
     #Check other possible move
@@ -163,47 +216,7 @@ def expand_bfs(node):
 
     return list(dict.fromkeys(possible_move))
 
-def evaluate_cost(node):
-    '''
-    This function is to evaluate cost by subtracting the distance between the current node and its parent (year,x,y)
-    depending on the method of search.
-    The adding their absolute value, it will differentiate the actions were taken
-    :param node: the goal node
-    :return:
-    - total_cost: the total cost of the moves taken to reach the goal
-    - cost_list: The list of tuple of the move taken from start to goal with the cost
-    '''
-    total_cost = 0
-    cost_list = []
-    if method == "BFS":
 
-        temp_node = node
-        while not (temp_node.parent is None):
-            total_cost += 1
-            cost_list.append((temp_node, 1))
-            temp_node = temp_node.parent
-
-        cost_list.append((temp_node,0))
-        cost_list.reverse()
-
-    else:
-        print("This is for ucs and A*")
-
-    return total_cost,cost_list
-
-def check_no_solution(init_node, goal_node, jaunts):
-    init_year = init_node.year
-    goal_year = goal_node.year
-    combine_year = [i.year for i in jaunts ]
-    combine_year.append(init_year)
-
-    if goal_year in combine_year:
-        if 0 <= goal_node.x < space_size_x and 0<= goal_node.y < space_size_y:
-            return True
-        else:
-            return False
-    else:
-        return False
 
 
 
@@ -223,7 +236,6 @@ def bfs(init_node, goal_node, jaunts):
     no_solution = check_no_solution(init_node, goal_node, jaunts)
 
     while (len(frontier_nodes) != 0) and (not found_goal) and (no_solution):      #while the frontier node is not empty and goal not found, keep searchingr
-        print(len(frontier_nodes))
         temp_node= frontier_nodes.pop(0)
 
         if temp_node.is_equal(goal_node):
@@ -247,7 +259,8 @@ def bfs(init_node, goal_node, jaunts):
     if not found_goal:
         return_statements.append("FAIL")
     else:
-        total_cost, cost_list = evaluate_cost(goal_node)
+        cost_list = evaluate_cost(goal_node)
+        total_cost = len(cost_list)-1
         return_statements.append(total_cost)
         return_statements.append(len(cost_list))
         for cost in cost_list:
@@ -257,6 +270,121 @@ def bfs(init_node, goal_node, jaunts):
 
     write_output(return_statements)
 
+
+'''
+This part is function that is specific for Uniform Cost Seacrch
+'''
+
+def expand_else(target_node):
+    '''
+    expand all the possible move of the node
+    This is where all the move constraint should be handled
+    where jaunts, space size x and space size y are global variable
+
+    :param node: is a tuple consist of the total cost to that point and Node class
+    :return: a list of possible moves, each with the total cost until that node
+    '''
+
+    move_cost_cheap = 10
+    move_cost_expen = 14
+    node = target_node[1]
+    # moves starts from jaunt, N,E,S,W, NE, SE, SW, NW
+    possible_move = []
+    # check jaunt
+    check_jaunt = check_node(node, jaunts)
+    if check_jaunt[0]:
+        list_of_jaunt = check_jaunt[1]
+        for i in list_of_jaunt:
+            possible_move.append((abs(jaunts[i].jaunt.year - node.year)+target_node[0],
+                                  (jaunts[i].jaunt.year, node.x, node.y)))
+
+    # Check other possible move
+    # North
+    if node.y + 1 < space_size_y:
+        temp_node = node.copy()
+        temp_node.y += 1
+        possible_move.append((move_cost_cheap + target_node[0],
+                              (temp_node.year, temp_node.x, temp_node.y)))
+    # East
+    if node.x + 1 < space_size_x:
+        temp_node = node.copy()
+        temp_node.x += 1
+        possible_move.append((move_cost_cheap + target_node[0],
+                              (temp_node.year, temp_node.x, temp_node.y)))
+
+    # South
+    if node.y - 1 >= 0:
+        temp_node = node.copy()
+        temp_node.y -= 1
+        possible_move.append((move_cost_cheap + target_node[0],
+                              (temp_node.year, temp_node.x, temp_node.y)))
+
+    # West
+    if node.x - 1 >= 0:
+        temp_node = node.copy()
+        temp_node.x -= 1
+        possible_move.append((move_cost_cheap + target_node[0],
+                              (temp_node.year, temp_node.x, temp_node.y)))
+
+    # North East
+    if node.x + 1 < space_size_x and node.y + 1 < space_size_y:
+        temp_node = node.copy()
+        temp_node.y += 1
+        temp_node.x += 1
+        possible_move.append((move_cost_expen + target_node[0],
+                              (temp_node.year, temp_node.x, temp_node.y)))
+
+
+
+    # South East
+    if node.x + 1 < space_size_x and node.y - 1 >= 0:
+        temp_node = node.copy()
+        temp_node.y -= 1
+        temp_node.x += 1
+        possible_move.append((move_cost_expen + target_node[0],
+                              (temp_node.year, temp_node.x, temp_node.y)))
+
+
+
+    # South West
+    if node.x - 1 >= 0 and node.y - 1 >= 0:
+        temp_node = node.copy()
+        temp_node.y -= 1
+        temp_node.x -= 1
+        possible_move.append((move_cost_expen + target_node[0],
+                              (temp_node.year, temp_node.x, temp_node.y)))
+
+
+
+    # North West
+    if node.x - 1 >= 0 and node.y + 1 < space_size_y:
+        temp_node = node.copy()
+        temp_node.y += 1
+        temp_node.x -= 1
+        possible_move.append((move_cost_expen + target_node[0],
+                              (temp_node.year, temp_node.x, temp_node.y)))
+
+    return list(dict.fromkeys(possible_move))
+
+def check_node_ucs(cost,target_node, nodes):
+    """
+    check the node only if it is in the frontier node
+
+    :param target_node: the node that is being look for
+    :param nodes: a list of tuple that consist total cost and the node
+    :return: a true or false if the node is in the list
+    """
+    found_node = False
+    item_index = []
+    for i in range(len(nodes)):
+        node = nodes[i]
+        if node[1].is_equal(target_node):
+            found_node = True
+            if node[0]> cost:
+                nodes[i] = (cost, node[1])
+    return found_node
+
+
 def ucs(init_node, goal_node, jaunts):
     # space size x and space size y are the bound of the space
     # THey are both global variable
@@ -265,18 +393,52 @@ def ucs(init_node, goal_node, jaunts):
     explored_nodes = []
 
     # initial
-    frontier_nodes.append(init_node)
+    frontier_nodes.append((0, init_node))
     explored_nodes.append((init_node.year, init_node.x, init_node.y))
 
     found_goal = False
 
     no_solution = check_no_solution(init_node, goal_node, jaunts)
+    total_cost = 0
 
+    while (len(frontier_nodes) != 0) and (not found_goal) and (no_solution):      #while the frontier node is not empty and goal not found, keep searchingr
+        print(len(frontier_nodes))
+        temp_node= frontier_nodes.pop(0)
 
+        if temp_node[1].is_equal(goal_node):
+            found_goal = True
+            goal_node.parent = temp_node[1].parent
+            total_cost += temp_node[0]
 
+        else:
+            childrens = expand_else(temp_node)
+            for child in childrens:
+                #Check if the node is in the explored list
+                child_pos = child[1]
+                if not (child_pos in explored_nodes):
+                    child_node = Node(child_pos[0], child_pos[1], child_pos[2])
+                    if not(check_node_ucs(child[0],child_node, frontier_nodes)):
+                        if temp_node[1].year != child[0]:
+                            child_node.jaunt = temp_node[1]
+                        child_node.parent = temp_node[1]
+                        explored_nodes.append((child_node.year, child_node.x, child_node.y))
+                        frontier_nodes.append((child[0],child_node))
 
-def ucs():
-    return "UCS"
+    return_statements = []
+
+    if not found_goal:
+        return_statements.append("FAIL")
+    else:
+        cost_list = evaluate_cost(goal_node)
+        return_statements.append(total_cost)
+        return_statements.append(len(cost_list))
+        for cost in cost_list:
+            current_node = cost[0]
+            return_statements.append(str(current_node.year) + " " + str(current_node.x) + " " + \
+                                     str(current_node.y) + " " + str(cost[1]))
+
+    write_output(return_statements)
+
 
 def a_star():
     return "A*"
@@ -287,7 +449,7 @@ method, space_size_x, space_size_y, init_node, goal_node, jaunts = read_input()
 if method == "BFS":
     bfs(init_node, goal_node, jaunts)
 elif method == "UCS":
-    ucs()
+    ucs(init_node,goal_node,jaunts)
 else:
     a_star()
 
@@ -353,6 +515,10 @@ else:
 # print(list1)
 
 #Sort a list that has a tuple
-# list1 = [(10,(2020, 30, 20)), (14, (2020, 10, 30)), (10, (2020, 20, 10))]
+# list1 = [(10,(2020, 30, 20)), (14, (2020, 10, 30)), (10, (2020, 30,20))]
+# list2 = [(10, "Chris"), (11, "adeline")]
+# # print(list2[0][1])
+# # print(sorted(list1, key = lambda x : x[0]  ))
+# list1[2]= (11,list1[2][1])
 # print(list1)
-# print(sorted(list1, key = lambda x : x[0]  ))
+# print(list(dict.fromkeys(list1)))
