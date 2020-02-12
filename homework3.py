@@ -1,3 +1,6 @@
+import math
+# import time
+
 class Node:
     def __init__(self,year,x,y, jaunt = None, parent = None):
         self.year = int(year)
@@ -95,7 +98,7 @@ def check_no_solution(init_node, goal_node, jaunts):
     combine_year.append(init_year)
 
     if goal_year in combine_year:
-        if 0 <= goal_node.x < space_size_x and 0<= goal_node.y < space_size_y:
+        if (0 <= goal_node.x < space_size_x) and (0<=goal_node.y< space_size_y):
             return True
         else:
             return False
@@ -115,22 +118,25 @@ def evaluate_cost(node):
     '''
     cost_list = []
 
+    temp_node = node
     if method == "BFS":
 
-        temp_node = node
         while not (temp_node.parent is None):
             cost_list.append((temp_node, 1))
             temp_node = temp_node.parent
 
     else:
-        temp_node = node
         while not (temp_node.parent is None):
-            if temp_node.x > temp_node.parent.x and temp_node.y > temp_node.parent.y:
-                cost_list((temp_node, 14))
-            elif temp_node.year != temp_node.parent.year:
-                cost_list.append((temp_node, abs(temp_node.parent.year - temp_node.year)))
+            if temp_node.x != temp_node.parent.x or temp_node.y != temp_node.parent.y:
+                x_diff = abs(temp_node.x - temp_node.parent.x)
+                y_diff = abs(temp_node.y - temp_node.parent.y)
+
+                if x_diff+y_diff == 2:
+                    cost_list.append((temp_node, 14))
+                else:
+                    cost_list.append((temp_node, 10))
             else:
-                cost_list.append((temp_node, 10))
+                cost_list.append((temp_node, abs(temp_node.parent.year - temp_node.year)))
             temp_node = temp_node.parent
 
     cost_list.append((temp_node, 0))
@@ -375,7 +381,6 @@ def check_node_ucs(cost,target_node, nodes):
     :return: a true or false if the node is in the list
     """
     found_node = False
-    item_index = []
     for i in range(len(nodes)):
         node = nodes[i]
         if node[1].is_equal(target_node):
@@ -402,7 +407,6 @@ def ucs(init_node, goal_node, jaunts):
     total_cost = 0
 
     while (len(frontier_nodes) != 0) and (not found_goal) and (no_solution):      #while the frontier node is not empty and goal not found, keep searchingr
-        print(len(frontier_nodes))
         temp_node= frontier_nodes.pop(0)
 
         if temp_node[1].is_equal(goal_node):
@@ -423,6 +427,8 @@ def ucs(init_node, goal_node, jaunts):
                         child_node.parent = temp_node[1]
                         explored_nodes.append((child_node.year, child_node.x, child_node.y))
                         frontier_nodes.append((child[0],child_node))
+            frontier_nodes = sorted(frontier_nodes, key=lambda x: x[0])
+
 
     return_statements = []
 
@@ -439,86 +445,114 @@ def ucs(init_node, goal_node, jaunts):
 
     write_output(return_statements)
 
+'''
+This is function necessary for a star algorithm
+'''
 
-def a_star():
-    return "A*"
+
+
+def heuristic(current_node):
+    '''
+    This function will calculate the heuristic of the node
+
+    :param current_node: a tuple that consist of (cost, node)
+    :return: the heuristic of the node
+    '''
+    # print("Current node: ", current_node[1])
+
+    g = current_node[0]
+    h = math.sqrt((current_node[1].year - goal_node.year)**2+\
+        (current_node[1].x - goal_node.x)**2 + abs(current_node[1].y - goal_node.y)**2)
+    f = g + h
+    # print("The hueristic: ",f)
+    # print()
+    return f
+
+def check_node_a(cost,target_node, nodes):
+    """
+    check the node only if it is in the frontier node
+
+    :param target_node: the node that is being look for
+    :param nodes: a list of tuple that consist total cost and the node
+    :return: a true or false if the node is in the list
+    """
+    found_node = False
+    for i in range(len(nodes)):
+        node = nodes[i]
+        if node[2].is_equal(target_node):
+            found_node = True
+            if node[1]> cost:
+                temp_node = (cost, node[2])
+                heu = heuristic(temp_node)
+                nodes[i] = (heu, cost, node[1])
+
+
+    return found_node
+
+def a_star(init_node, goal_node, jaunts):
+    # space size x and space size y are the bound of the space
+    # THey are both global variable
+
+    frontier_nodes = []
+    explored_nodes = []
+
+    # initial
+    frontier_nodes.append((0, 0, init_node))                                      #the tuple consist of (f, total cost to this node, current node)
+    explored_nodes.append((init_node.year, init_node.x, init_node.y))
+
+    found_goal = False
+
+    no_solution = check_no_solution(init_node, goal_node, jaunts)
+    total_cost = 0
+
+    while (len(frontier_nodes) != 0) and (not found_goal) and (no_solution):      #while the frontier node is not empty and goal not found, keep searchingr
+        temp_node= frontier_nodes.pop(0)
+
+        if temp_node[2].is_equal(goal_node):
+            found_goal = True
+            goal_node.parent = temp_node[2].parent
+            total_cost += temp_node[1]
+
+        else:
+            childrens = expand_else((temp_node[1],temp_node[2]))
+            for child in childrens:
+                child_pos = child[1]
+                if not (child_pos in explored_nodes):
+                    child_node = Node(child_pos[0], child_pos[1], child_pos[2])
+                    if not(check_node_a(child[0],child_node, frontier_nodes)):
+                        if temp_node[2].year != child[0]:
+                            child_node.jaunt = temp_node[2]
+                        child_node.parent = temp_node[2]
+                        explored_nodes.append((child_node.year, child_node.x, child_node.y))
+                        frontier_nodes.append((heuristic((child[0], child_node)),child[0],child_node))
+            frontier_nodes = sorted(frontier_nodes, key= lambda x : x[0] )
+
+    return_statements = []
+
+    if not found_goal:
+        return_statements.append("FAIL")
+    else:
+        cost_list = evaluate_cost(goal_node)
+        return_statements.append(total_cost)
+        return_statements.append(len(cost_list))
+        for cost in cost_list:
+            current_node = cost[0]
+            return_statements.append(str(current_node.year) + " " + str(current_node.x) + " " + \
+                                     str(current_node.y) + " " + str(cost[1]))
+
+    write_output(return_statements)
 
 # Main Function
 method, space_size_x, space_size_y, init_node, goal_node, jaunts = read_input()
 
+
+# start_time = time.time()
 if method == "BFS":
     bfs(init_node, goal_node, jaunts)
 elif method == "UCS":
     ucs(init_node,goal_node,jaunts)
 else:
-    a_star()
-
-# TEST
-
-# method = read_input()
-# print (method[1])
-
-# test jaunt list
-# for jaunt in jaunts:
-#     print(jaunt)
-
-# temp_node = Node(2020, 12, 16)
-# print(temp_node in jaunts)              # This will return the wrong answer
-
-#Check the check_node function using temp_node      #This will result in a correct answer
-# for jaunt in jaunts:
-#     if temp_node.is_equal(jaunt):
-#         print(True)
-
-# explored_node = []
-# childrens = expand_bfs(temp_node,explored_node)
-# print(explored_node[0])
-
-#test if the jaunt is the one in the list
-# test_node = Node(2020,12,16, 100)
-# j = 0
-# for i in jaunts:
-#     print("This is j = ",j)
-#     print(i.is_equal(test_node))
-#     j+=1
+    a_star(init_node,goal_node,jaunts)
 
 
-#test copy def in node
-# method, space_size_x, space_size_y, init_node, goal_node, jaunts = read_input()
-# node = init_node.copy()
-# node.x += 1
-# print(init_node.x)
-# print(node.x)
-
-#testing if a tuple could also be reverse
-# node1 = Node(1,2,3)
-# node2 = Node(2,3,4)
-# node3 = Node(3,4,5)
-# node4 = Node(4,5,6)
-#
-# list_nodes = [(node1,1 ), (node2, 2), (node3, 3), (node4, 4)]
-# list_nodes.reverse()
-# print(list_nodes[0][1])
-# print(len(list_nodes))
-
-#Check if a tuple of string can be checked
-# tuple1 = [(2020,12,11), (2021, 13, 10)]
-# tuple2 = [(2020,12,11), (2021, 13, 10), (2020, 3, 1)]
-# print(len(tuple2))
-# tuple1.append((2020,12,11))
-# print(tuple1)
-# print(list(set(tuple1)))
-# print(set(tuple2) )
-
-# list1 = [i for i in range (10)]
-# list1.append(10)
-# print(list1)
-
-#Sort a list that has a tuple
-# list1 = [(10,(2020, 30, 20)), (14, (2020, 10, 30)), (10, (2020, 30,20))]
-# list2 = [(10, "Chris"), (11, "adeline")]
-# # print(list2[0][1])
-# # print(sorted(list1, key = lambda x : x[0]  ))
-# list1[2]= (11,list1[2][1])
-# print(list1)
-# print(list(dict.fromkeys(list1)))
+# print("--- %s seconds ---" % (time.time() - start_time))
