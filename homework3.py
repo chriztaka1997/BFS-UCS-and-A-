@@ -98,7 +98,8 @@ def check_no_solution(init_node, goal_node, jaunts):
     combine_year.append(init_year)
 
     if goal_year in combine_year:
-        if (0 <= goal_node.x < space_size_x) and (0<=goal_node.y< space_size_y):
+        if (0 <= goal_node.x < space_size_x) and (0<=goal_node.y< space_size_y)\
+                and (0 <= init_node.x < space_size_x) and (0 <= init_node.y < space_size_y):
             return True
         else:
             return False
@@ -506,6 +507,7 @@ def a_star(init_node, goal_node, jaunts):
     total_cost = 0
 
     while (len(frontier_nodes) != 0) and (not found_goal) and (no_solution):      #while the frontier node is not empty and goal not found, keep searchingr
+        print("Number of nodes in frontier node: ",len(frontier_nodes))
         temp_node= frontier_nodes.pop(0)
 
         if temp_node[2].is_equal(goal_node):
@@ -515,6 +517,7 @@ def a_star(init_node, goal_node, jaunts):
 
         else:
             childrens = expand_else((temp_node[1],temp_node[2]))
+            # print("Size of the children: ", len(childrens))
             for child in childrens:
                 child_pos = child[1]
                 if not (child_pos in explored_nodes):
